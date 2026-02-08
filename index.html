@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhanu's YOLO Daily Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 id="appTitle">🚀 Bhanu's YOLO Daily Tracker</h1>
+                <span class="current-date" id="currentDate"></span>
+            </div>
+            <div class="header-center">
+                <div class="auth-section" id="authSection">
+                    <button class="auth-btn" id="loginBtn" onclick="signInWithGoogle()">
+                        <span>🔐</span> Sign In with Google
+                    </button>
+                    <div class="user-info hidden" id="userInfo">
+                        <img id="userAvatar" src="" alt="User" class="user-avatar">
+                        <span id="userName"></span>
+                        <button class="logout-btn" onclick="signOutUser()">Logout</button>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="view-toggle active" id="kanbanViewBtn" onclick="switchView('kanban')">
+                    <span>⬛</span> Kanban
+                </button>
+                <button class="view-toggle" id="listViewBtn" onclick="switchView('list')">
+                    <span>📃</span> List
+                </button>
+            </div>
+        </header>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Filter by:</label>
+                <select id="filterType" onchange="updateFilter()">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="all">All Time</option>
+                </select>
+                <input type="date" id="filterDate" onchange="updateFilter()" max="9999-12-31">
+            </div>
+            <div class="action-buttons">
+                <div class="export-dropdown">
+                    <button class="export-btn" onclick="toggleExportMenu()">
+                        <span>📥</span> Export
+                    </button>
+                    <div class="export-menu hidden" id="exportMenu">
+                        <button onclick="exportTasks('current')">Current View</button>
+                        <button onclick="exportTasks('day')">Today</button>
+                        <button onclick="exportTasks('week')">This Week</button>
+                        <button onclick="exportTasks('month')">This Month</button>
+                        <button onclick="exportTasks('all')">All Tasks</button>
+                    </div>
+                </div>
+                <button class="add-task-btn" onclick="openModal()">
+                    <span>+</span> Add Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Sync Status -->
+        <div class="sync-status hidden" id="syncStatus">
+            <span class="sync-icon">🔄</span>
+            <span class="sync-text">Syncing...</span>
+        </div>
+
+        <!-- Kanban View -->
+        <div class="kanban-view" id="kanbanView">
+            <div class="kanban-column" data-status="todo" ondragover="handleDragOver(event)"
+                ondrop="handleDrop(event, 'todo')">
+                <div class="column-header todo-header">
+                    <span class="status-dot todo"></span>
+                    <h3>To Do</h3>
+                    <span class="task-count" id="todoCount">0</span>
+                </div>
+                <div class="task-list" id="todoTasks"></div>
+            </div>
+            <div class="kanban-column" data-status="inprogress" ondragover="handleDragOver(event)"
+                ondrop="handleDrop(event, 'inprogress')">
+                <div class="column-header inprogress-header">
+                    <span class="status-dot inprogress"></span>
+                    <h3>In Progress</h3>
+                    <span class="task-count" id="inprogressCount">0</span>
+                </div>
+                <div class="task-list" id="inprogressTasks"></div>
+            </div>
+            <div class="kanban-column" data-status="onhold" ondragover="handleDragOver(event)"
+                ondrop="handleDrop(event, 'onhold')">
+                <div class="column-header onhold-header">
+                    <span class="status-dot onhold"></span>
+                    <h3>On Hold</h3>
+                    <span class="task-count" id="onholdCount">0</span>
+                </div>
+                <div class="task-list" id="onholdTasks"></div>
+            </div>
+            <div class="kanban-column" data-status="done" ondragover="handleDragOver(event)"
+                ondrop="handleDrop(event, 'done')">
+                <div class="column-header done-header">
+                    <span class="status-dot done"></span>
+                    <h3>Done</h3>
+                    <span class="task-count" id="doneCount">0</span>
+                </div>
+                <div class="task-list" id="doneTasks"></div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div class="list-view hidden" id="listView">
+            <div class="list-container" id="listContainer"></div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Total Tasks</span>
+                <span class="stat-value" id="totalTasks">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Completed</span>
+                <span class="stat-value completed" id="completedTasks">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">In Progress</span>
+                <span class="stat-value progress" id="progressTasks">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Hours Logged</span>
+                <span class="stat-value hours" id="totalHours">0</span>
+            </div>
+        </div>
+
+        <!-- Activity Heatmap (Bottom) -->
+        <div class="heatmap-section">
+            <div class="heatmap-header">
+                <h3>📊 Activity Heatmap</h3>
+                <div class="heatmap-controls">
+                    <select id="heatmapYear" onchange="updateHeatmap()">
+                        <!-- Dynamically populated -->
+                    </select>
+                    <select id="heatmapMonth" onchange="updateHeatmap()">
+                        <option value="all">All Months</option>
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                </div>
+                <div class="heatmap-legend">
+                    <span>Less</span>
+                    <div class="legend-squares">
+                        <div class="legend-square level-0"></div>
+                        <div class="legend-square level-1"></div>
+                        <div class="legend-square level-2"></div>
+                        <div class="legend-square level-3"></div>
+                        <div class="legend-square level-4"></div>
+                    </div>
+                    <span>More</span>
+                </div>
+            </div>
+            <div class="heatmap-months" id="heatmapMonths"></div>
+            <div class="heatmap-container" id="heatmapContainer">
+                <!-- Dynamically generated -->
+            </div>
+            <div class="heatmap-summary" id="heatmapSummary"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div class="modal-overlay hidden" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Task</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <input type="hidden" id="taskId">
+
+                <div class="form-group">
+                    <label for="taskTitle">Task Title *</label>
+                    <input type="text" id="taskTitle" required placeholder="e.g., Linked List Practice">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskDate">Date *</label>
+                        <input type="date" id="taskDate" required max="9999-12-31">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskHours">Hours</label>
+                        <input type="number" id="taskHours" min="0" max="24" step="0.5" placeholder="e.g., 2">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskStatus">Status *</label>
+                    <div class="status-options">
+                        <label class="status-option todo">
+                            <input type="radio" name="taskStatus" value="todo" checked>
+                            <span>To Do</span>
+                        </label>
+                        <label class="status-option inprogress">
+                            <input type="radio" name="taskStatus" value="inprogress">
+                            <span>In Progress</span>
+                        </label>
+                        <label class="status-option onhold">
+                            <input type="radio" name="taskStatus" value="onhold">
+                            <span>On Hold</span>
+                        </label>
+                        <label class="status-option done">
+                            <input type="radio" name="taskStatus" value="done">
+                            <span>Done</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskNotes">Notes</label>
+                    <textarea id="taskNotes" rows="3" placeholder="Add any additional notes..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

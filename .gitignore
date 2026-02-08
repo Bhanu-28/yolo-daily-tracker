@@ -1,0 +1,27 @@
+# YOLO Daily Tracker - Git Ignore
+
+# Firebase config with real credentials (use firebase-config.example.js instead)
+firebase-config.js
+
+DEPLOYMENT_GUIDE.md
+FIREBASE_SETUP.md
+
+# Firebase hosting
+.firebase/
+.firebaserc
+
+# Node modules (if using npm)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
